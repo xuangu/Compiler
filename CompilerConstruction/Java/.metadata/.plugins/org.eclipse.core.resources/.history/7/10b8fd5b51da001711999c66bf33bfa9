@@ -1,0 +1,21 @@
+/*				 Selection set
+ * 1) S -> BD		{b,c}
+ * 2) B -> bB		{b}
+ * 3) B -> c		{c}
+ * 4) D -> de		{d}
+ */
+
+public class Fig0901 {
+	public static void main(String[] args) {
+		
+	}
+}
+
+
+class Fig0901Parser {
+	private ArgsTokenMgr tMgr;
+	public Fig0901Parser(ArgsTokenMgr tMgr) {
+		// TODO Auto-generated constructor stub
+		
+	}
+}

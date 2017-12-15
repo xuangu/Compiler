@@ -1,0 +1,61 @@
+import java.io.*;
+import java.util.Scanner;
+
+import org.omg.CORBA.PUBLIC_MEMBER;
+
+public class Fig1010 {
+	public static void main() {
+		
+	}
+}
+
+interface Fig1010Constants {
+	public int EOF = 0;
+	public int UNSIGNED = 1;
+	public int PLUS = 2;
+	public int MINUS = 3;
+	public int TIMES = 4;
+	public int DIVIDE = 5;
+	public int ERROR = 6;
+	
+	String[] tokenImage = {
+							"<EOF>",
+							"<UNSIGNED>",
+							"\"+\"",
+							"\"-\"",
+							"\"*\"",
+							"\"/\"",
+							"ERROR"
+							};
+}
+
+class Fig1010TokenMgr implements Fig1010Constants {
+	private Scanner inFile;
+	private char currentChar;
+	private int currentColumnNumber;
+	private int currentLineNumber;
+	private String inputLine;
+	private Token token;
+	private StringBuffer buffer;
+	
+	public Fig1010TokenMgr(Scanner inFile) {
+		this.inFile = inFile;
+		currentChar = '\n';
+		currentColumnNumber = 0;
+		currentLineNumber = 0;
+		buffer = new StringBuffer();
+	}
+	
+	private void getNextChar() {
+		if (currentChar == EOF) {
+			return;
+		}
+	}
+}
+
+class Token {
+	public int type;
+	public int beginLine, beginColumn, endLine, endColumn;
+	public String image;
+	public Token nextToken;
+}

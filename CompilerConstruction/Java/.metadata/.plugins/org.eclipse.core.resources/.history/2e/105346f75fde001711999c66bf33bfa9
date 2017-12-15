@@ -1,0 +1,35 @@
+
+public class Fig1004 {
+	public static void main(String[] args) {
+		ArgsTokenMgr tMgr = new ArgsTokenMgr(args);
+		Fig1004Parser parser = new Fig1004Parser(tMgr);
+		parser.parse();
+	}
+}
+
+class Fig1004Parser {
+	private ArgsTokenMgr tMgr;
+	private char currentToken;
+	
+	Fig1004Parser(ArgsTokenMgr tMgr) {
+		this.tMgr = tMgr;
+		advance()
+	}
+	
+	private void advance() {
+		currentToken = tMgr.getNextToken();
+	}
+	
+	private void consume(char expected) {
+		if (currentToken == expected) {
+			advance();
+		} else {
+			throw new RuntimeException("Expecting \"" + expected + "\"");
+		}
+		
+	}
+	
+	public void parse() {
+		
+	}
+}
