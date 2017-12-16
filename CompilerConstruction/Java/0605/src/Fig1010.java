@@ -7,6 +7,8 @@ public class Fig1010 {
 		Fig1010TokenMgr tMgr = new Fig1010TokenMgr(inFile);
 		Fig1010Parser parser = new Fig1010Parser(tMgr);
 		parser.parse();
+		
+		System.out.println("parse successful");
 	}
 }
 
@@ -59,6 +61,8 @@ class Fig1010TokenMgr implements Fig1010Constants {
 				currentLineNumber++;
 			} else {
 				currentChar = EOF;
+				
+				return ;
 			}
 		}
 		
@@ -88,7 +92,7 @@ class Fig1010TokenMgr implements Fig1010Constants {
 				token.endColumn = currentColumnNumber;
 				token.endLine = currentLineNumber;
 				getNextChar();
-			} while (Character.isDefined(currentChar));
+			} while (Character.isDigit(currentChar));
 			
 			token.type = UNSIGNED;
 			token.image = buffer.toString();
@@ -148,7 +152,7 @@ class Fig1010Parser implements Fig1010Constants {
 		} else {
 			// 类比链表在链表尾追加一个节点
 			currentToken.nextToken = tMgr.getNextToken();
-			currentToken = tMgr.getNextToken();
+			currentToken = currentToken.nextToken;
 		}
 	}
 	
