@@ -15,7 +15,7 @@ public class S1Compiler {
 		String inFileName = args[0] + ".s";
 		String outFileName = args[0] + ".a";
 		
-		Scanner inFile = new Scanner(inFileName);
+		Scanner inFile = new Scanner(new File(inFileName));
 		PrintWriter outFile = new PrintWriter(outFileName);
 		
 		outFile.println("; from S1 compiler written by ...");
@@ -36,6 +36,13 @@ public class S1Compiler {
 		
 		outFile.close();
 	}
+} 
+
+class Token {
+	public int type;
+	public int beginLine, beginColumn, endLine, endColumn;
+	public String image;
+	public Token nextToken;
 }
 
 interface S1Constants {
@@ -50,8 +57,8 @@ interface S1Constants {
 	public int PLUS = 8;
 	public int MINUS = 9;
 	public int TIMES = 10;
-	public int DIVIDE = 12;
-	public int ERROR = 11;
+	public int DIVIDE = 11;
+	public int ERROR = 12;
 	
 	String[] tokenImage = {
 							"<EOF>",
@@ -65,6 +72,7 @@ interface S1Constants {
 							"\"+\"",
 							"\"-\"",
 							"\"*\"",
+							"DIVIDE",
 							"ERROR"
 							};
 }
@@ -126,6 +134,8 @@ class S1TokenMgr implements S1Constants {
 				currentLineNumber++;
 			} else {
 				currentChar = EOF;
+				
+				return ;
 			}
 		}
 		
@@ -155,7 +165,7 @@ class S1TokenMgr implements S1Constants {
 				token.endColumn = currentColumnNumber;
 				token.endLine = currentLineNumber;
 				getNextChar();
-			} while (Character.isDefined(currentChar));
+			} while (Character.isDigit(currentChar));
 			
 			token.type = UNSIGNED;
 			token.image = buffer.toString();
@@ -166,9 +176,11 @@ class S1TokenMgr implements S1Constants {
 				token.endColumn = currentColumnNumber;
 				token.endLine = currentLineNumber;
 				getNextChar();
-			} while (Character.isLetter(currentChar));
+			} while (Character.isLetterOrDigit(currentChar));
+			
 			token.image = buffer.toString();
-			if (token.image.equals(tokenImage[PRINTLN])) {
+			
+			if (token.image.equals("println")) {
 				token.type = PRINTLN;
 			} else {
 				token.type = ID;
@@ -187,6 +199,9 @@ class S1TokenMgr implements S1Constants {
 			case ')':
 				token.type = RIGHTPAREN;
 				break;
+			case '+':
+				token.type = PLUS;
+				break;
 			case '-':
 				token.type = MINUS;
 				break;
@@ -200,7 +215,7 @@ class S1TokenMgr implements S1Constants {
 				token.type = ERROR;
 				break;
 			}
-			token.image = tokenImage[token.type];
+			token.image = Character.toString(currentChar);
 			token.endColumn = currentColumnNumber;
 			token.endLine = currentLineNumber;
 			
@@ -237,7 +252,7 @@ class S1Parser implements S1Constants {
 		} else {
 			// 类比链表在链表尾追加一个节点
 			currentToken.nextToken = tMgr.getNextToken();
-			currentToken = tMgr.getNextToken();
+			currentToken = currentToken.nextToken;
 		}
 	}
 	
@@ -302,7 +317,7 @@ class S1Parser implements S1Constants {
 			;
 			break;
 		default:
-			genEx("parse run, expecting statement or <EOF>");
+			throw genEx("parse run, expecting statement or <EOF>");
 		}
 	}
 	
@@ -315,7 +330,7 @@ class S1Parser implements S1Constants {
 			printlnStatement();
 			break;
 		default:
-			break;
+			throw genEx("Expecting statement");
 		}
 	}
 	
@@ -363,7 +378,7 @@ class S1Parser implements S1Constants {
 		case SEMICOLON:
 			break;
 		default:
-			break;
+			genEx("Expecting \"+\", \")\", or \";\"");
 		}
 	}
 	
@@ -394,7 +409,7 @@ class S1Parser implements S1Constants {
 			consume(MINUS);
 			token = currentToken;
 			consume(UNSIGNED);
-			codeGen.emitInstruction("sub", token.image);
+			codeGen.emitInstruction("pwc", "-" + token.image);
 			break;
 			
 		case LEFTPAREN:
@@ -427,7 +442,7 @@ class S1Parser implements S1Constants {
 		case PLUS:
 			break;
 		default:
-			break;
+			throw genEx("Expecting op, \")\", or \";\"");
 		}
 	}
 	

@@ -123,12 +123,12 @@ class Fig1010TokenMgr implements Fig1010Constants {
 	}
 }
 
-class Token {
-	public int type;
-	public int beginLine, beginColumn, endLine, endColumn;
-	public String image;
-	public Token nextToken;
-}
+//class Token {
+//	public int type;
+//	public int beginLine, beginColumn, endLine, endColumn;
+//	public String image;
+//	public Token nextToken;
+//}
 
 class Fig1010Parser implements Fig1010Constants {
 	private Fig1010TokenMgr tMgr;
