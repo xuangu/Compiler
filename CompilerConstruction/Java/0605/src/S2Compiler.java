@@ -38,12 +38,12 @@ public class S2Compiler {
 	}
 } 
 
-class Token {
-	public int type;
-	public int beginLine, beginColumn, endLine, endColumn;
-	public String image;
-	public Token nextToken;
-}
+//class Token {
+//    public int type;
+//    public int beginLine, beginColumn, endLine, endColumn;
+//    public String image;
+//    public Token nextToken;
+//}
 
 interface S2Constants {
 	public int EOF = 0;
