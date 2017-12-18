@@ -1,9 +1,9 @@
 import java.io.*;
 import java.util.*;
 
-public class S1Compiler {
+public class S2Compiler {
 	public static void main(String[] args) throws IOException {
-		System.out.println("S1 compiler written by ...");
+		System.out.println("S2 compiler written by ...");
 		
 		if (args.length != 1) {
 			System.err.println("Wrong number and line args");
@@ -18,12 +18,12 @@ public class S1Compiler {
 		Scanner inFile = new Scanner(new File(inFileName));
 		PrintWriter outFile = new PrintWriter(outFileName);
 		
-		outFile.println("; from S1 compiler written by ...");
+		outFile.println("; from S2 compiler written by ...");
 		
-		S1SymTab symTab = new S1SymTab();
-		S1TokenMgr tMgr = new S1TokenMgr(inFile, outFile, isInDebugMode);
-		S1CodeGeneration codeGen = new S1CodeGeneration(outFile, symTab);
-		S1Parser parser = new S1Parser(symTab, tMgr, codeGen);
+		S2SymTab symTab = new S2SymTab();
+		S2TokenMgr tMgr = new S2TokenMgr(inFile, outFile, isInDebugMode);
+		S2CodeGeneration codeGen = new S2CodeGeneration(outFile, symTab);
+		S2Parser parser = new S2Parser(symTab, tMgr, codeGen);
 		
 		try {
 			parser.parse();
@@ -38,14 +38,14 @@ public class S1Compiler {
 	}
 } 
 
-//class Token {
-//	public int type;
-//	public int beginLine, beginColumn, endLine, endColumn;
-//	public String image;
-//	public Token nextToken;
-//}
+class Token {
+	public int type;
+	public int beginLine, beginColumn, endLine, endColumn;
+	public String image;
+	public Token nextToken;
+}
 
-interface S1Constants {
+interface S2Constants {
 	public int EOF = 0;
 	public int PRINTLN = 1;
 	public int UNSIGNED = 2;
@@ -59,6 +59,9 @@ interface S1Constants {
 	public int TIMES = 10;
 	public int DIVIDE = 11;
 	public int ERROR = 12;
+	public int PRINT = 13;
+	public int LEFTBRACE = 14;
+	public int RIGHTBRACE = 15;
 	
 	String[] tokenImage = {
 							"<EOF>",
@@ -73,14 +76,17 @@ interface S1Constants {
 							"\"-\"",
 							"\"*\"",
 							"DIVIDE",
-							"ERROR"
+							"ERROR",
+							"PRINT",
+							"LEFTBRACE",
+							"RIGHTBRACE"
 							};
 }
 
-class S1SymTab {
+class S2SymTab {
 	private ArrayList<String> symbolTable;
 	
-	public S1SymTab() {
+	public S2SymTab() {
 		this.symbolTable = new ArrayList<String>();
 	}
 	
@@ -99,7 +105,7 @@ class S1SymTab {
 	}
 }
 
-class S1TokenMgr implements S1Constants {
+class S2TokenMgr implements S2Constants {
 	private Scanner inFile;
 	private PrintWriter outFile;
 	private boolean isInDebugMode;
@@ -110,7 +116,7 @@ class S1TokenMgr implements S1Constants {
 	private Token token;
 	private StringBuffer buffer;
 	
-	public S1TokenMgr(Scanner inFile, PrintWriter outFile, boolean isInDebugMode) {
+	public S2TokenMgr(Scanner inFile, PrintWriter outFile, boolean isInDebugMode) {
 		this.inFile = inFile;
 		this.outFile = outFile;
 		this.isInDebugMode = isInDebugMode;
@@ -140,6 +146,10 @@ class S1TokenMgr implements S1Constants {
 		}
 		
 		currentChar = inputLine.charAt(currentColumnNumber++);
+		
+		if (currentChar == '/' && inputLine.charAt(currentColumnNumber) == '/') {
+			currentChar = '\n';
+		}
 	}
 	
 	public Token getNextToken() {
@@ -182,6 +192,8 @@ class S1TokenMgr implements S1Constants {
 			
 			if (token.image.equals("println")) {
 				token.type = PRINTLN;
+			} else if (token.image.equals("print")) {
+				token.type = PRINT;
 			} else {
 				token.type = ID;
 			}
@@ -211,6 +223,13 @@ class S1TokenMgr implements S1Constants {
 			case '/':
 				token.type = DIVIDE;
 				break;
+			case '{':
+				token.type = LEFTBRACE;
+				break;
+			case '}':
+				token.type = RIGHTBRACE;
+				break;
+			
 			default:
 				token.type = ERROR;
 				break;
@@ -230,14 +249,14 @@ class S1TokenMgr implements S1Constants {
 	}
 }
 
-class S1Parser implements S1Constants {
-	private S1TokenMgr tMgr;
-	private S1SymTab symbolTable;
-	private S1CodeGeneration codeGen;
+class S2Parser implements S2Constants {
+	private S2TokenMgr tMgr;
+	private S2SymTab symbolTable;
+	private S2CodeGeneration codeGen;
 	private Token currentToken;
 	private Token previousToken;
 	
-	public S1Parser(S1SymTab symTab, S1TokenMgr tMgr, S1CodeGeneration codeGen) {
+	public S2Parser(S2SymTab symTab, S2TokenMgr tMgr, S2CodeGeneration codeGen) {
 		this.tMgr = tMgr;
 		this.symbolTable = symTab;
 		this.codeGen = codeGen;
@@ -310,10 +329,14 @@ class S1Parser implements S1Constants {
 		switch (currentToken.type) {
 		case ID:
 		case PRINTLN:
+		case PRINT:
+		case LEFTBRACE:
+		case SEMICOLON:
 			statement();
 			statementList();
 			break;
 		case EOF:
+		case RIGHTBRACE:
 			;
 			break;
 		default:
@@ -328,6 +351,15 @@ class S1Parser implements S1Constants {
 			break;
 		case PRINTLN:
 			printlnStatement();
+			break;
+		case PRINT:
+			printStatement();
+			break;
+		case SEMICOLON:
+			nullStatement();
+			break;
+		case LEFTBRACE:
+			compoundStatement();
 			break;
 		default:
 			throw genEx("Expecting statement");
@@ -356,6 +388,27 @@ class S1Parser implements S1Constants {
 		consume(SEMICOLON);
 	}
 	
+	private void printStatement() {
+		consume(PRINT);
+		consume(LEFTPAREN);
+		expr();
+		codeGen.emitInstruction("dout");
+		consume(RIGHTPAREN);
+		consume(SEMICOLON);
+	}
+	
+	private void nullStatement() {
+		consume(SEMICOLON);
+	}
+	
+	private void compoundStatement() {
+		codeGen.emitInstruction("pc", "{");
+		consume(LEFTBRACE);
+		statementList();
+		codeGen.emitInstruction("pc", "}");
+		consume(RIGHTBRACE);
+	}
+	
 	private void expr() {
 		term();
 		termList();
@@ -374,9 +427,18 @@ class S1Parser implements S1Constants {
 			codeGen.emitInstruction("add");
 			termList();
 			break;
+			
+		case MINUS:
+			consume(MINUS);
+			term();
+			codeGen.emitInstruction("sub");
+			termList();
+			break;
+			
 		case RIGHTPAREN:
 		case SEMICOLON:
 			break;
+			
 		default:
 			genEx("Expecting \"+\", \")\", or \";\"");
 		}
@@ -418,12 +480,6 @@ class S1Parser implements S1Constants {
 			consume(RIGHTPAREN);
 			break;
 		
-		case TIMES:
-			
-		
-		case DIVIDE:
-			
-		
 		default:
 			throw genEx("Expecting operator or " + tokenImage[UNSIGNED]);
 		}
@@ -437,9 +493,18 @@ class S1Parser implements S1Constants {
 			codeGen.emitInstruction("mult");
 			factorList();
 			break;
+		
+		case DIVIDE:
+			consume(DIVIDE);
+			factor();
+			codeGen.emitInstruction("div");
+			factorList();
+			break;
+			
 		case RIGHTPAREN:
 		case SEMICOLON:
 		case PLUS:
+		case MINUS:
 			break;
 		default:
 			throw genEx("Expecting op, \")\", or \";\"");
@@ -449,11 +514,11 @@ class S1Parser implements S1Constants {
 	
 }
 
-class S1CodeGeneration {
+class S2CodeGeneration {
 	private PrintWriter outFile;
-	private S1SymTab symbolTable;
+	private S2SymTab symbolTable;
 	
-	public S1CodeGeneration(PrintWriter outFile, S1SymTab symbolTable) {
+	public S2CodeGeneration(PrintWriter outFile, S2SymTab symbolTable) {
 		this.outFile = outFile;
 		this.symbolTable = symbolTable;
 	}
